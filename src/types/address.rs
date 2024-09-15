@@ -1,4 +1,5 @@
 use serde::{Serialize, Deserialize};
+use ring::digest;
 
 // 20-byte address
 #[derive(Eq, PartialEq, Serialize, Deserialize, Clone, Hash, Default, Copy)]
@@ -48,7 +49,17 @@ impl std::fmt::Debug for Address {
 
 impl Address {
     pub fn from_public_key_bytes(bytes: &[u8]) -> Address {
-        unimplemented!()
+        // Hash the input bytes using SHA256
+        let hash = digest::digest(&digest::SHA256, bytes);
+        
+        // Take the last 20 bytes of the hash
+        let address_bytes = &hash.as_ref()[hash.as_ref().len() - 20..];
+
+        // Convert the last 20 bytes into an Address struct
+        let mut address_array = [0u8; 20];
+        address_array.copy_from_slice(address_bytes);
+
+        Address(address_array)
     }
 }
 // DO NOT CHANGE THIS COMMENT, IT IS FOR AUTOGRADER. BEFORE TEST
