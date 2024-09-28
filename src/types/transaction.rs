@@ -1,7 +1,9 @@
 use serde::{Serialize,Deserialize};
 use ring::signature::{Ed25519KeyPair, KeyPair, Signature, UnparsedPublicKey, ED25519};
 use rand::Rng;
+use crate::types::hash::{Hashable, H256};
 use bincode;
+use ring::digest;
 
 // Assuming Address struct is defined in another module
 use crate::types::address::Address;
@@ -37,6 +39,12 @@ impl SignedTransaction {
             signature: signature_vector,
             public_key: public_key_vector,
         }
+    }
+}
+
+impl Hashable for SignedTransaction {
+    fn hash(&self) -> H256 {
+        ring::digest::digest(&ring::digest::SHA256, &bincode::serialize(self).expect("Failed to serialize SignedTransaction")).into()
     }
 }
 
@@ -91,6 +99,8 @@ mod tests {
     use super::*;
     use crate::types::key_pair;
     use ring::signature::KeyPair;
+    use ring::digest;
+
 
 
     #[test]
