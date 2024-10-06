@@ -1,3 +1,7 @@
+use std::sync::{Arc, Mutex};
+use crate::blockchain::Blockchain;
+use crate::types::hash::Hashable;
+
 pub mod worker;
 
 use log::info;
@@ -26,6 +30,7 @@ pub struct Context {
     control_chan: Receiver<ControlSignal>,
     operating_state: OperatingState,
     finished_block_chan: Sender<Block>,
+    pub blockchain: Arc<Mutex<Blockchain>>,
 }
 
 #[derive(Clone)]
@@ -34,7 +39,7 @@ pub struct Handle {
     control_chan: Sender<ControlSignal>,
 }
 
-pub fn new() -> (Context, Handle, Receiver<Block>) {
+pub fn new(blockchain: Arc<Mutex<Blockchain>>) -> (Context, Handle, Receiver<Block>) {
     let (signal_chan_sender, signal_chan_receiver) = unbounded();
     let (finished_block_sender, finished_block_receiver) = unbounded();
 
@@ -42,6 +47,7 @@ pub fn new() -> (Context, Handle, Receiver<Block>) {
         control_chan: signal_chan_receiver,
         operating_state: OperatingState::Paused,
         finished_block_chan: finished_block_sender,
+        blockchain: Arc::clone(&blockchain), // Pass blockchain
     };
 
     let handle = Handle {
@@ -53,7 +59,12 @@ pub fn new() -> (Context, Handle, Receiver<Block>) {
 
 #[cfg(any(test,test_utilities))]
 fn test_new() -> (Context, Handle, Receiver<Block>) {
-    new()
+    // Create a new, empty blockchain for testing purposes
+    let blockchain = Blockchain::new();
+    let blockchain = Arc::new(Mutex::new(blockchain));  // Wrap it in Arc<Mutex<>> for thread-safe access
+
+    // Call the modified new() function, passing the new blockchain
+    new(Arc::clone(&blockchain))
 }
 
 impl Handle {
@@ -133,6 +144,66 @@ impl Context {
             }
 
             // TODO for student: actual mining, create a block
+            use rand::Rng;
+            use std::time::{SystemTime, UNIX_EPOCH};
+
+            // 1. Get the parent block hash from the blockchain tip
+            let blockchain = self.blockchain.lock().expect("Failed to lock blockchain");
+            let mut parent_hash = blockchain.tip();
+
+            // 2. Generate the current timestamp in milliseconds
+            let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)
+                .expect("Time went backwards")
+                .as_millis();
+
+            // 3. Set difficulty as the same as the parent block (static for this project)
+            let difficulty = [255u8; 32].into();
+            //WATCH OUT
+            drop(blockchain);
+
+            // 4. Compute the Merkle root (using empty transactions in this phase)
+            use crate::types::block::compute_merkle_root;
+            let transactions = vec![];  // No transactions, so we use an empty list
+            let merkle_root = compute_merkle_root(&transactions);
+
+            // 5. Mining loop: Generate a random nonce and create the block
+            let mut rng = rand::thread_rng();
+            loop {
+                let nonce: u32 = rng.gen();  // Generate a random nonce
+
+                let header = crate::types::block::Header {
+                    parent: parent_hash,
+                    nonce,
+                    difficulty,
+                    timestamp: timestamp as u128,
+                    merkle_root,
+                };
+
+                let block = crate::types::block::Block {
+                    header,
+                    content: crate::types::block::Content {
+                        data: transactions.clone(),
+                    },
+                };
+
+                // 6. Check if the block hash satisfies the difficulty (Proof-of-Work check)
+                if block.hash() <= difficulty {
+
+                    // Insert the mined block directly into the blockchain COULD BE DELETED LATER
+                    {
+                        let mut blockchain_guard = self.blockchain.lock().expect("Failed to lock blockchain");
+                        blockchain_guard.insert(&block).expect("Failed to insert block into blockchain");
+                    }
+
+                    // Send the block through the finished_block_chan if needed (optional, if worker is bypassed)
+                    self.finished_block_chan.send(block.clone()).expect("Failed to send finished block");
+
+                    // Update the parent to the new block's hash for the next iteration
+                    parent_hash = block.hash();
+                    break;
+                }
+            }
+
             // TODO for student: if block mining finished, you can have something like: self.finished_block_chan.send(block.clone()).expect("Send finished block error");
 
             if let OperatingState::Run(i) = self.operating_state {
@@ -161,6 +232,8 @@ mod test {
         let mut block_prev = finished_block_chan.recv().unwrap();
         for _ in 0..2 {
             let block_next = finished_block_chan.recv().unwrap();
+            println!("block_prev hash: {:?}", block_prev.hash());
+            println!("block_next parent hash: {:?}", block_next.get_parent());
             assert_eq!(block_prev.hash(), block_next.get_parent());
             block_prev = block_next;
         }
