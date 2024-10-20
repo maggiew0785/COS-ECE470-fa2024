@@ -6,6 +6,8 @@ use std::thread;
 use std::sync::{Arc, Mutex};
 use crate::Blockchain;
 use crate::types::hash::Hashable;
+use crate::network::message::Message;
+
 
 
 #[derive(Clone)]
@@ -52,6 +54,9 @@ impl Worker {
             
             // Logging the insertion of the block
             //info!("Block inserted into the blockchain: {:?}", block.hash());
+            let block_hash = block.hash();
+            self.server.broadcast(Message::NewBlockHashes(vec![block_hash]));
+            info!("Broadcasting NewBlockHashes for block: {:?}", block_hash);
         }
     }
 }

@@ -9,7 +9,7 @@ pub enum BlockchainError {
 }
 
 pub struct Blockchain {
-    blocks: HashMap<H256, Block>,
+    pub blocks: HashMap<H256, Block>,
     chain_lengths: HashMap<H256, usize>, // Track chain length for each block's hash
     tip: H256, // Track the tip of the longest chain
 }

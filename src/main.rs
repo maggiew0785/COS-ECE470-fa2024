@@ -75,6 +75,7 @@ fn main() {
             process::exit(1);
         });
     let worker_ctx = network::worker::Worker::new(
+        Arc::clone(&blockchain), // Pass the same blockchain to the network worker
         p2p_workers,
         msg_rx,
         &server,
