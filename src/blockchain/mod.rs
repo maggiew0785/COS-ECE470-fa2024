@@ -2,6 +2,7 @@ use crate::types::block::Block;
 use crate::types::hash::H256;
 use crate::types::hash::Hashable;
 use std::collections::HashMap;
+use hex_literal::hex;
 
 #[derive(Debug)]
 pub enum BlockchainError {
@@ -26,7 +27,7 @@ impl Blockchain {
         let content = crate::types::block::Content {
             data: vec![], // Empty transactions
         };
-
+        let timestamp = 0u128;
         let merkle_root = crate::types::block::compute_merkle_root(&content.data);
 
         let header = crate::types::block::Header {
