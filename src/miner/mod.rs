@@ -1,16 +1,11 @@
 use std::sync::{Arc, Mutex};
 use crate::blockchain::Blockchain;
 use crate::types::hash::Hashable;
-
 pub mod worker;
-
 use log::info;
-
 use crossbeam::channel::{unbounded, Receiver, Sender, TryRecvError};
 use std::time;
-
 use std::thread;
-
 use crate::types::block::Block;
 
 enum ControlSignal {

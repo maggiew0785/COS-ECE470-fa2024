@@ -1,0 +1,498 @@
+    Updating crates.io index
+     Locking 171 packages to latest compatible versions
+      Adding async-channel v1.9.0 (latest: v2.3.1)
+      Adding async-fs v1.6.0 (latest: v2.1.2)
+      Adding async-io v1.13.0 (latest: v2.3.4)
+      Adding async-lock v2.8.0 (latest: v3.4.0)
+      Adding async-net v1.8.0 (latest: v2.0.0)
+      Adding async-process v1.8.1 (latest: v2.3.0)
+      Adding bitflags v1.3.2 (latest: v2.6.0)
+      Adding clap v2.34.0 (latest: v4.5.20)
+      Adding event-listener v2.5.3 (latest: v5.3.1)
+      Adding event-listener v3.1.0 (latest: v5.3.1)
+      Adding fastrand v1.9.0 (latest: v2.1.1)
+      Adding futures-lite v1.13.0 (latest: v2.3.0)
+      Adding hermit-abi v0.1.19 (latest: v0.4.0)
+      Adding hermit-abi v0.3.9 (latest: v0.4.0)
+      Adding hex-literal v0.3.4 (latest: v0.4.1)
+      Adding idna v0.5.0 (latest: v1.0.2)
+      Adding io-lifetimes v1.0.11 (latest: v2.0.3)
+      Adding linux-raw-sys v0.3.8 (latest: v0.6.5)
+      Adding linux-raw-sys v0.4.14 (latest: v0.6.5)
+      Adding ntest v0.7.5 (latest: v0.9.3)
+      Adding ntest_proc_macro_helper v0.7.5 (latest: v0.8.0)
+      Adding ntest_test_cases v0.7.5 (latest: v0.9.3)
+      Adding ntest_timeout v0.7.5 (latest: v0.9.3)
+      Adding polling v2.8.0 (latest: v3.7.3)
+      Adding proc-macro-crate v1.3.1 (latest: v3.2.0)
+      Adding ring v0.16.20 (latest: v0.17.8)
+      Adding rustix v0.37.27 (latest: v0.38.37)
+      Adding smol v1.3.0 (latest: v2.0.2)
+      Adding socket2 v0.4.10 (latest: v0.5.7)
+      Adding spin v0.5.2 (latest: v0.9.8)
+      Adding stderrlog v0.5.4 (latest: v0.6.0)
+      Adding strsim v0.8.0 (latest: v0.11.1)
+      Adding syn v1.0.109 (latest: v2.0.81)
+      Adding termcolor v1.1.3 (latest: v1.4.1)
+      Adding textwrap v0.11.0 (latest: v0.16.1)
+      Adding tiny_http v0.9.0 (latest: v0.12.0)
+      Adding toml_edit v0.19.15 (latest: v0.22.22)
+      Adding unicode-width v0.1.14 (latest: v0.2.0)
+      Adding untrusted v0.7.1 (latest: v0.9.0)
+      Adding wasi v0.11.0+wasi-snapshot-preview1 (latest: v0.13.3+wasi-0.2.2)
+      Adding windows-core v0.52.0 (latest: v0.58.0)
+      Adding windows-sys v0.48.0 (latest: v0.59.0)
+      Adding windows-sys v0.52.0 (latest: v0.59.0)
+      Adding windows-targets v0.48.5 (latest: v0.52.6)
+      Adding windows_aarch64_gnullvm v0.48.5 (latest: v0.52.6)
+      Adding windows_aarch64_msvc v0.48.5 (latest: v0.52.6)
+      Adding windows_i686_gnu v0.48.5 (latest: v0.52.6)
+      Adding windows_i686_msvc v0.48.5 (latest: v0.52.6)
+      Adding windows_x86_64_gnu v0.48.5 (latest: v0.52.6)
+      Adding windows_x86_64_gnullvm v0.48.5 (latest: v0.52.6)
+      Adding windows_x86_64_msvc v0.48.5 (latest: v0.52.6)
+      Adding winnow v0.5.40 (latest: v0.6.20)
+      Adding zerocopy v0.7.35 (latest: v0.8.6)
+      Adding zerocopy-derive v0.7.35 (latest: v0.8.6)
+ Downloading crates ...
+  Downloaded cc v1.1.31
+  Downloaded serde_json v1.0.132
+  Downloaded syn v2.0.81
+  Downloaded libc v0.2.161
+  Downloaded proc-macro2 v1.0.88
+   Compiling autocfg v1.4.0
+   Compiling libc v0.2.161
+   Compiling crossbeam-utils v0.8.20
+   Compiling pin-project-lite v0.2.14
+   Compiling proc-macro2 v1.0.88
+   Compiling unicode-ident v1.0.13
+   Compiling futures-core v0.3.31
+   Compiling parking v2.2.1
+   Compiling futures-io v0.3.31
+   Compiling cfg-if v1.0.0
+   Compiling fastrand v2.1.1
+   Compiling memchr v2.7.4
+   Compiling io-lifetimes v1.0.11
+   Compiling event-listener v2.5.3
+   Compiling futures-lite v2.3.0
+   Compiling log v0.4.22
+   Compiling slab v0.4.9
+   Compiling rustix v0.38.37
+   Compiling polling v2.8.0
+   Compiling bitflags v1.3.2
+   Compiling tracing-core v0.1.32
+   Compiling fastrand v1.9.0
+   Compiling bitflags v2.6.0
+   Compiling waker-fn v1.2.0
+   Compiling rustix v0.37.27
+   Compiling futures-lite v1.13.0
+   Compiling quote v1.0.37
+   Compiling concurrent-queue v2.5.0
+   Compiling syn v2.0.81
+   Compiling event-listener v5.3.1
+   Compiling tracing v0.1.40
+   Compiling num-traits v0.2.19
+   Compiling async-io v1.13.0
+   Compiling async-lock v2.8.0
+   Compiling once_cell v1.20.2
+   Compiling event-listener-strategy v0.5.2
+   Compiling syn v1.0.109
+   Compiling async-lock v3.4.0
+   Compiling hashbrown v0.15.0
+   Compiling errno v0.3.9
+   Compiling equivalent v1.0.1
+   Compiling tinyvec_macros v0.1.1
+   Compiling async-task v4.7.1
+   Compiling atomic-waker v1.1.2
+   Compiling tinyvec v1.8.0
+   Compiling piper v0.2.4
+   Compiling socket2 v0.4.10
+   Compiling indexmap v2.6.0
+   Compiling async-channel v2.3.1
+   Compiling futures-sink v0.3.31
+   Compiling shlex v1.3.0
+   Compiling serde v1.0.210
+   Compiling toml_datetime v0.6.8
+   Compiling core-foundation-sys v0.8.7
+   Compiling winnow v0.5.40
+   Compiling byteorder v1.5.0
+   Compiling iana-time-zone v0.1.61
+   Compiling unicode-normalization v0.1.24
+   Compiling cc v1.1.31
+   Compiling futures-channel v0.3.31
+   Compiling blocking v1.6.1
+   Compiling polling v3.7.3
+   Compiling signal-hook-registry v1.4.2
+   Compiling async-io v2.3.4
+   Compiling getrandom v0.2.15
+   Compiling async-fs v1.6.0
+   Compiling futures-task v0.3.31
+   Compiling pin-utils v0.1.0
+   Compiling unicode-bidi v0.3.17
+   Compiling percent-encoding v2.3.1
+   Compiling form_urlencoded v1.2.1
+   Compiling ring v0.16.20
+   Compiling rand_core v0.6.4
+   Compiling toml_edit v0.19.15
+   Compiling idna v0.5.0
+   Compiling async-signal v0.2.10
+   Compiling chrono v0.4.38
+   Compiling term_size v0.3.2
+   Compiling atty v0.2.14
+   Compiling event-listener v3.1.0
+   Compiling crossbeam-epoch v0.9.18
+   Compiling serde_json v1.0.132
+   Compiling ntest_proc_macro_helper v0.7.5
+   Compiling unicode-width v0.1.14
+   Compiling crossbeam-deque v0.8.5
+   Compiling async-process v1.8.1
+   Compiling textwrap v0.11.0
+   Compiling url v2.5.2
+   Compiling proc-macro-crate v1.3.1
+   Compiling async-net v1.8.0
+   Compiling zerocopy-derive v0.7.35
+   Compiling futures-macro v0.3.31
+   Compiling serde_derive v1.0.210
+   Compiling async-executor v1.13.1
+   Compiling thread_local v1.1.8
+   Compiling async-channel v1.9.0
+   Compiling crossbeam-queue v0.3.11
+   Compiling futures-util v0.3.31
+   Compiling zerocopy v0.7.35
+   Compiling crossbeam-channel v0.5.13
+   Compiling ryu v1.0.18
+   Compiling ascii v1.1.0
+   Compiling untrusted v0.7.1
+   Compiling vec_map v0.8.2
+   Compiling termcolor v1.1.3
+   Compiling itoa v1.0.11
+   Compiling chunked_transfer v1.5.0
+   Compiling strsim v0.8.0
+   Compiling ppv-lite86 v0.2.20
+   Compiling ntest_test_cases v0.7.5
+   Compiling ntest_timeout v0.7.5
+   Compiling ansi_term v0.12.1
+   Compiling tiny_http v0.9.0
+   Compiling clap v2.34.0
+   Compiling rand_chacha v0.3.1
+   Compiling stderrlog v0.5.4
+   Compiling ntest v0.7.5
+   Compiling rand v0.8.5
+   Compiling crossbeam v0.8.4
+   Compiling smol v1.3.0
+   Compiling async-dup v1.2.4
+   Compiling hex-literal v0.3.4
+   Compiling hex v0.4.3
+   Compiling futures-executor v0.3.31
+   Compiling futures v0.3.31
+   Compiling bincode v1.3.3
+   Compiling bitcoin v0.1.0 (/Users/ishaanbhagat/Documents/GitHub/COS-ECE470-fa2024/Project5/mw0785_ib5506_sy8603/COS-ECE470-fa2024-main)
+warning: unexpected `cfg` condition name: `test_utilities`
+  --> src/types/block.rs:65:17
+   |
+65 | #[cfg(any(test, test_utilities))]
+   |                 ^^^^^^^^^^^^^^
+   |
+   = help: expected names are: `clippy`, `debug_assertions`, `doc`, `docsrs`, `doctest`, `feature`, `miri`, `overflow_checks`, `panic`, `proc_macro`, `relocation_model`, `rustfmt`, `sanitize`, `sanitizer_cfi_generalize_pointers`, `sanitizer_cfi_normalize_integers`, `target_abi`, `target_arch`, `target_endian`, `target_env`, `target_family`, `target_feature`, `target_has_atomic`, `target_has_atomic_equal_alignment`, `target_has_atomic_load_store`, `target_os`, `target_pointer_width`, `target_thread_local`, `target_vendor`, `test`, `ub_checks`, `unix`, and `windows`
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+   = note: `#[warn(unexpected_cfgs)]` on by default
+
+warning: unused import: `ring::digest`
+ --> src/types/block.rs:4:5
+  |
+4 | use ring::digest;
+  |     ^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unexpected `cfg` condition name: `test_utilities`
+ --> src/types/hash.rs:3:17
+  |
+3 | #[cfg(any(test, test_utilities))]
+  |                 ^^^^^^^^^^^^^^
+  |
+  = help: consider using a Cargo feature instead
+  = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+           [lints.rust]
+           unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+  = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+   --> src/types/hash.rs:112:17
+    |
+112 | #[cfg(any(test, test_utilities))]
+    |                 ^^^^^^^^^^^^^^
+    |
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+  --> src/types/transaction.rs:72:17
+   |
+72 | #[cfg(any(test, test_utilities))]
+   |                 ^^^^^^^^^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unused import: `ring::digest`
+ --> src/types/transaction.rs:6:5
+  |
+6 | use ring::digest;
+  |     ^^^^^^^^^^^^
+
+warning: unused import: `ring::digest`
+   --> src/types/transaction.rs:102:9
+    |
+102 |     use ring::digest;
+    |         ^^^^^^^^^^^^
+
+warning: unused imports: `H256`, `Hashable`, and `transaction::SignedTransaction`
+ --> src/types/mempool.rs:2:12
+  |
+2 |     hash::{Hashable, H256},
+  |            ^^^^^^^^  ^^^^
+3 |     transaction::SignedTransaction,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> src/types/state.rs:1:5
+  |
+1 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unexpected `cfg` condition name: `test_utilities`
+  --> src/miner/mod.rs:60:16
+   |
+60 | #[cfg(any(test,test_utilities))]
+   |                ^^^^^^^^^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unused imports: `Sender`, `TryRecvError`, and `unbounded`
+ --> src/miner/worker.rs:1:26
+  |
+1 | use crossbeam::channel::{unbounded, Receiver, Sender, TryRecvError};
+  |                          ^^^^^^^^^            ^^^^^^  ^^^^^^^^^^^^
+
+warning: unused import: `debug`
+ --> src/miner/worker.rs:2:11
+  |
+2 | use log::{debug, info};
+  |           ^^^^^
+
+warning: unexpected `cfg` condition name: `test_utilities`
+  --> src/network/peer.rs:30:16
+   |
+30 | #[cfg(any(test,test_utilities))]
+   |                ^^^^^^^^^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+  --> src/network/peer.rs:62:16
+   |
+62 | #[cfg(any(test,test_utilities))]
+   |                ^^^^^^^^^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+  --> src/network/peer.rs:49:20
+   |
+49 |     #[cfg(any(test,test_utilities))]
+   |                    ^^^^^^^^^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+   --> src/network/server.rs:235:16
+    |
+235 | #[cfg(any(test,test_utilities))]
+    |                ^^^^^^^^^^^^^^
+    |
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+   --> src/network/server.rs:239:16
+    |
+239 | #[cfg(any(test,test_utilities))]
+    |                ^^^^^^^^^^^^^^
+    |
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+   --> src/network/server.rs:270:20
+    |
+270 |     #[cfg(any(test,test_utilities))]
+    |                    ^^^^^^^^^^^^^^
+    |
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+  --> src/network/worker.rs:15:16
+   |
+15 | #[cfg(any(test,test_utilities))]
+   |                ^^^^^^^^^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+  --> src/network/worker.rs:17:16
+   |
+17 | #[cfg(any(test,test_utilities))]
+   |                ^^^^^^^^^^^^^^
+   |
+   = help: consider using a Cargo feature instead
+   = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+            [lints.rust]
+            unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+   = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+   --> src/network/worker.rs:142:16
+    |
+142 | #[cfg(any(test,test_utilities))]
+    |                ^^^^^^^^^^^^^^
+    |
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+   --> src/network/worker.rs:146:16
+    |
+146 | #[cfg(any(test,test_utilities))]
+    |                ^^^^^^^^^^^^^^
+    |
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unexpected `cfg` condition name: `test_utilities`
+   --> src/network/worker.rs:160:16
+    |
+160 | #[cfg(any(test,test_utilities))]
+    |                ^^^^^^^^^^^^^^
+    |
+    = help: consider using a Cargo feature instead
+    = help: or consider adding in `Cargo.toml` the `check-cfg` lint config for the lint:
+             [lints.rust]
+             unexpected_cfgs = { level = "warn", check-cfg = ['cfg(test_utilities)'] }
+    = help: or consider adding `println!("cargo::rustc-check-cfg=cfg(test_utilities)");` to the top of the `build.rs`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+warning: unused import: `crossbeam::channel::Sender`
+ --> src/network/worker.rs:9:5
+  |
+9 | use crossbeam::channel::Sender;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unreachable expression
+  --> src/generator/generator.rs:29:13
+   |
+27 |               unimplemented!();
+   |               ---------------- any code following this expression is unreachable
+28 |
+29 | /             if theta != 0 {
+30 | |                 let interval = time::Duration::from_millis(10 * theta);
+31 | |                 thread::sleep(interval);
+32 | |             }
+   | |_____________^ unreachable expression
+   |
+   = note: `#[warn(unreachable_code)]` on by default
+
+warning: value assigned to `parent_hash` is never read
+   --> src/miner/mod.rs:202:21
+    |
+202 |                     parent_hash = block.hash();
+    |                     ^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` on by default
+
+warning: unused variable: `theta`
+  --> src/generator/generator.rs:25:37
+   |
+25 |     fn generate_transactions(&self, theta: u64) {
+   |                                     ^^^^^ help: if this is intentional, prefix it with an underscore: `_theta`
+   |
+   = note: `#[warn(unused_variables)]` on by default
+
+warning: unused `Result` that must be used
+   --> src/blockchain/mod.rs:117:9
+    |
+117 |         blockchain.insert(&block);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this `Result` may be an `Err` variant, which should be handled
+    = note: `#[warn(unused_must_use)]` on by default
+help: use `let _ = ...` to ignore the resulting value
+    |
+117 |         let _ = blockchain.insert(&block);
+    |         +++++++
+
+warning: `bitcoin` (bin "bitcoin" test) generated 28 warnings (run `cargo fix --bin "bitcoin" --tests` to apply 8 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 42.64s
+     Running unittests src/main.rs (target/debug/deps/bitcoin-cc0b76bc5c902fd0)

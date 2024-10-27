@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use crossbeam::channel::Sender;
 
+
 use log::{debug, info, warn, error};
 
 use std::thread;
@@ -20,7 +21,8 @@ use super::server::TestReceiver as ServerTestReceiver;
 pub struct Worker {
     // The blockchain is now thread-safe using Arc<Mutex<Blockchain>>
     pub blockchain: Arc<Mutex<Blockchain>>,
-    pub buffer: HashMap<H256, Block>, // Buffer for blocks waiting for parents
+    // Change buffer to map from parent_hash -> blocks waiting for that parent
+    orphan_buffer: HashMap<H256, Vec<Block>>, // parent_hash -> blocks
     msg_chan: smol::channel::Receiver<(Vec<u8>, peer::Handle)>,
     num_worker: usize,
     server: ServerHandle,
@@ -36,7 +38,7 @@ impl Worker {
     ) -> Self {
         Self {
             blockchain,
-            buffer: HashMap::new(),
+            orphan_buffer: HashMap::new(),
             msg_chan: msg_src,
             num_worker,
             server: server.clone(),
@@ -104,31 +106,53 @@ impl Worker {
                     for block in blocks {
                         let parent_hash = block.get_parent();
                         let block_hash = block.hash();
-    
+
+                        // 1. PoW Validity Check
+                        if block.hash() > block.header.difficulty {
+                            warn!("Block failed PoW check: {:?}", block_hash);
+                            continue;
+                        }
+
                         let mut blockchain = self.blockchain.lock().unwrap();
-    
-                        // Check if the parent block is already in the blockchain
-                        if blockchain.blocks.contains_key(&parent_hash) {
-                            // Parent exists, insert the block into the blockchain
+
+                        // 2. Parent Check & Difficulty Consistency Check
+                        if let Some(parent_block) = blockchain.blocks.get(&parent_hash) {
+                            // Check difficulty consistency with parent
+                            if block.header.difficulty != parent_block.header.difficulty {
+                                warn!("Block difficulty mismatch with parent: {:?}", block_hash);
+                                continue;
+                            }
+
+                            // Parent exists, try to insert the block
                             if blockchain.insert(&block).is_ok() {
                                 info!("Block inserted: {:?}", block_hash);
                                 self.server.broadcast(Message::NewBlockHashes(vec![block_hash]));
-    
-                                // Check if any buffered blocks can now be inserted
-                                if let Some(child_block) = self.buffer.remove(&block_hash) {
-                                    if blockchain.insert(&child_block).is_ok() {
-                                        let child_hash = child_block.hash();
-                                        info!("Buffered child block inserted: {:?}", child_hash);
-                                        self.server.broadcast(Message::NewBlockHashes(vec![child_hash]));
+
+                                // Process any orphaned children
+                                // Keep processing orphans as long as we find children
+                                let mut current_parent = block_hash;
+                                while let Some(orphaned_children) = self.orphan_buffer.remove(&current_parent) {
+                                    for orphan_block in orphaned_children {
+                                        if orphan_block.hash() <= orphan_block.header.difficulty {
+                                            if blockchain.insert(&orphan_block).is_ok() {
+                                                let orphan_hash = orphan_block.hash();
+                                                info!("Orphaned block inserted: {:?}", orphan_hash);
+                                                self.server.broadcast(Message::NewBlockHashes(vec![orphan_hash]));
+                                                current_parent = orphan_hash;
+                                            }
+                                        }
                                     }
                                 }
                             }
                         } else {
-                            // Parent is missing, buffer the block
+                            // Parent missing, add to orphan buffer
                             info!("Parent not found for block: {:?}. Buffering block.", block_hash);
-                            self.buffer.insert(block_hash, block);
-    
-                            // Send a GetBlocks request to get the missing parent
+                            self.orphan_buffer
+                                .entry(parent_hash)
+                                .or_insert_with(Vec::new)
+                                .push(block);
+
+                            // Request missing parent
                             peer.write(Message::GetBlocks(vec![parent_hash]));
                         }
                     }
