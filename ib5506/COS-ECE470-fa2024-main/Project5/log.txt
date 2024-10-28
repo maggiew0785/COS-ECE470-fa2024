@@ -1,9 +1,0 @@
-student netid: mw0785_ib5506_sy8603
-
-running 3 tests
-test network::worker::test::sp2022autograder041 ... ok
-test network::worker::test::sp2022autograder042 ... ok
-test network::worker::test::sp2022autograder043 ... ok
-
-test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
-
