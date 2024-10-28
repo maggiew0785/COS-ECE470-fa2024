@@ -28,7 +28,7 @@ impl Blockchain {
         */
         
         let difficulty = H256::from(hex!(
-            "00000000000000000000ffffffffffffffffffffffffffffffffffffffffffff"
+            "0000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         ));
         
         let content = crate::types::block::Content {
