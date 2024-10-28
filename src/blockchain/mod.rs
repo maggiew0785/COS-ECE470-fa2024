@@ -22,12 +22,12 @@ impl Blockchain {
         let parent = H256::from([0u8; 32]); // Parent is all zeroes
         let nonce = 0;
         let difficulty = H256::from(hex!(
-            "00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         ));
         let content = crate::types::block::Content {
             data: vec![], // Empty transactions
         };
-        let timestamp = 0u128;
+        let timestamp = 0;
         let merkle_root = crate::types::block::compute_merkle_root(&content.data);
 
         let header = crate::types::block::Header {

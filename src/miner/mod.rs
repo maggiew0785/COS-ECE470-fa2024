@@ -145,6 +145,8 @@ impl Context {
             // 1. Get the parent block hash from the blockchain tip
             let blockchain = self.blockchain.lock().expect("Failed to lock blockchain");
             let mut parent_hash = blockchain.tip();
+            let parent_block = blockchain.blocks.get(&parent_hash).expect("Parent block not found");
+
 
             // 2. Generate the current timestamp in milliseconds
             let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)
@@ -152,8 +154,7 @@ impl Context {
                 .as_millis();
 
             // 3. Set difficulty as the same as the parent block (static for this project)
-            let difficulty = [255u8; 32].into();
-            //WATCH OUT
+            let difficulty = parent_block.get_difficulty();
             drop(blockchain);
 
             // 4. Compute the Merkle root (using empty transactions in this phase)

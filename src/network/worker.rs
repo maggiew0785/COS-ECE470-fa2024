@@ -129,7 +129,6 @@ impl Worker {
                                 self.server.broadcast(Message::NewBlockHashes(vec![block_hash]));
 
                                 // Process any orphaned children
-                                // Keep processing orphans as long as we find children
                                 let mut current_parent = block_hash;
                                 while let Some(orphaned_children) = self.orphan_buffer.remove(&current_parent) {
                                     for orphan_block in orphaned_children {
@@ -145,7 +144,7 @@ impl Worker {
                                 }
                             }
                         } else {
-                            // Parent missing, add to orphan buffer
+                            // Parent is missing, add to orphan buffer
                             info!("Parent not found for block: {:?}. Buffering block.", block_hash);
                             self.orphan_buffer
                                 .entry(parent_hash)
