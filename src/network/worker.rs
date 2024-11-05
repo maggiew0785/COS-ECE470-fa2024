@@ -3,6 +3,7 @@ use super::peer;
 use super::server::Handle as ServerHandle;
 use crate::types::hash::{H256, Hashable};
 use crate::types::block::Block;
+use crate::types::mempool::Mempool;
 use crate::blockchain::Blockchain;
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
@@ -21,6 +22,7 @@ use super::server::TestReceiver as ServerTestReceiver;
 pub struct Worker {
     // The blockchain is now thread-safe using Arc<Mutex<Blockchain>>
     pub blockchain: Arc<Mutex<Blockchain>>,
+    pub mempool: Arc<Mutex<Mempool>>,
     // Change buffer to map from parent_hash -> blocks waiting for that parent
     orphan_buffer: HashMap<H256, Vec<Block>>, // parent_hash -> blocks
     msg_chan: smol::channel::Receiver<(Vec<u8>, peer::Handle)>,
@@ -32,12 +34,14 @@ pub struct Worker {
 impl Worker {
     pub fn new(
         blockchain: Arc<Mutex<Blockchain>>,
+        mempool: Arc<Mutex<Mempool>>,
         num_worker: usize,
         msg_src: smol::channel::Receiver<(Vec<u8>, peer::Handle)>,
         server: &ServerHandle,
     ) -> Self {
         Self {
             blockchain,
+            mempool,
             orphan_buffer: HashMap::new(),
             msg_chan: msg_src,
             num_worker,
@@ -107,12 +111,25 @@ impl Worker {
                         let parent_hash = block.get_parent();
                         let block_hash = block.hash();
 
-                        // 1. PoW Validity Check
-                        if block.hash() > block.header.difficulty {
-                            warn!("Block failed PoW check: {:?}", block_hash);
-                            continue;
-                        }
+                        // Verify PoW and transactions in one lock
+                        {
+                            if block.hash() > block.header.difficulty {
+                                warn!("Block failed PoW check: {:?}", block_hash);
+                                continue;
+                            }
 
+                            let valid_transactions: Vec<_> = block.content.data
+                                .iter()
+                                .filter(|tx| tx.verify())
+                                .collect();
+                            
+                            if valid_transactions.len() != block.content.data.len() {
+                                warn!("Block contains invalid transaction: {:?}", block_hash);
+                                continue;
+                            }
+                        } // blockchain lock dropped here
+                        
+                        
                         let mut blockchain = self.blockchain.lock().unwrap();
 
                         // 2. Parent Check & Difficulty Consistency Check
@@ -127,6 +144,10 @@ impl Worker {
                             if blockchain.insert(&block).is_ok() {
                                 info!("Block inserted: {:?}", block_hash);
                                 self.server.broadcast(Message::NewBlockHashes(vec![block_hash]));
+
+                                let mut mempool = self.mempool.lock().unwrap();
+                                mempool.remove_transactions(&block.content.data);
+                                drop(mempool);
 
                                 // Process any orphaned children
                                 let mut current_parent = block_hash;
@@ -154,8 +175,56 @@ impl Worker {
                             // Request missing parent
                             peer.write(Message::GetBlocks(vec![parent_hash]));
                         }
+                        drop(blockchain);
                     }
                 }
+
+                Message::NewTransactionHashes(hashes) => {
+                    let mut txs_to_request = Vec::new();
+                    {
+                        let mempool = self.mempool.lock().unwrap();
+                        for hash in hashes {
+                            if !mempool.contains(&hash) {
+                                txs_to_request.push(hash);
+                            }
+                        }
+                        drop(mempool);
+                    }
+                    if !txs_to_request.is_empty() {
+                        peer.write(Message::GetTransactions(txs_to_request));
+                    }
+                }
+
+                Message::GetTransactions(hashes) => {
+                    let mut transactions = Vec::new();
+                    let mempool = self.mempool.lock().unwrap();
+                    for hash in hashes {
+                        if let Some(tx) = mempool.get_transaction(&hash) {
+                            transactions.push(tx.clone());
+                        }
+                    }
+                    drop(mempool);
+                    if !transactions.is_empty() {
+                        peer.write(Message::Transactions(transactions));
+                    }
+                }
+
+                Message::Transactions(transactions) => {
+                    let valid_transactions: Vec<_> = transactions
+                        .into_iter()
+                        .filter(|tx| tx.verify())
+                        .collect();
+                    
+                    let blockchain = self.blockchain.lock().unwrap();
+                    let mut mempool = self.mempool.lock().unwrap();
+                    for tx in valid_transactions {
+                        mempool.insert(tx.clone());
+                        self.server.broadcast(Message::NewTransactionHashes(vec![tx.hash()]));
+                    }
+                    drop(mempool);
+                    drop(blockchain);
+                }
+
                 _ => unimplemented!(),
             }
         }

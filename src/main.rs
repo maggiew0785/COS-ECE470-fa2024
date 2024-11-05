@@ -2,6 +2,8 @@
 #[macro_use]
 extern crate hex_literal;
 
+use crate::types::mempool::Mempool;
+
 pub mod api;
 pub mod blockchain;
 pub mod types;
@@ -38,6 +40,7 @@ fn main() {
     stderrlog::new().verbosity(verbosity).init().unwrap();
     let blockchain = Blockchain::new();
     let blockchain = Arc::new(Mutex::new(blockchain));
+    let mempool = Arc::new(Mutex::new(Mempool::new()));
     // parse p2p server address
     let p2p_addr = matches
         .value_of("peer_addr")
@@ -76,6 +79,7 @@ fn main() {
         });
     let worker_ctx = network::worker::Worker::new(
         Arc::clone(&blockchain), // Pass the same blockchain to the network worker
+        Arc::clone(&mempool),  // Add mempool
         p2p_workers,
         msg_rx,
         &server,
@@ -84,7 +88,10 @@ fn main() {
 
     // start the miner
 
-    let (miner_ctx, miner_handle, finished_block_chan) = miner::new(Arc::clone(&blockchain));  // Pass the blockchain here
+    let (miner_ctx, miner_handle, finished_block_chan) = miner::new(
+        Arc::clone(&blockchain),
+        Arc::clone(&mempool)
+    );
     let miner_worker_ctx = miner::worker::Worker::new(&server, finished_block_chan, Arc::clone(&blockchain));  // Pass blockchain to Worker
 
     miner_ctx.start();
@@ -130,6 +137,7 @@ fn main() {
         &miner_handle,
         &server,
         &blockchain,
+        &mempool,
     );
 
     loop {

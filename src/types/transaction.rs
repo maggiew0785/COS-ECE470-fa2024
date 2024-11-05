@@ -1,6 +1,7 @@
 use serde::{Serialize,Deserialize};
 use ring::signature::{Ed25519KeyPair, KeyPair, Signature, UnparsedPublicKey, ED25519};
 use rand::Rng;
+use crate::blockchain::Blockchain;
 use crate::types::hash::{Hashable, H256};
 use bincode;
 use ring::digest;
@@ -10,16 +11,16 @@ use crate::types::address::Address;
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Transaction {
-    sender: Address,
-    receiver: Address,
-    value: u64,
+    pub receiver: Address,
+    pub value: u64,
+    pub nonce: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct SignedTransaction {
-    transaction: Transaction,
-    signature: Vec<u8>,
-    public_key: Vec<u8>,
+    pub transaction: Transaction,
+    pub signature: Vec<u8>,
+    pub public_key: Vec<u8>,
 }
 
 impl SignedTransaction {
@@ -39,6 +40,26 @@ impl SignedTransaction {
             signature: signature_vector,
             public_key: public_key_vector,
         }
+    }
+
+    pub fn verify(&self) -> bool {
+        // 1. Signature verification
+        let verification_result = UnparsedPublicKey::new(
+            &ED25519,
+            &self.public_key
+        ).verify(
+            &bincode::serialize(&self.transaction).unwrap(),
+            &self.signature
+        );
+    
+        if verification_result.is_err() {
+            return false;
+        }
+    
+        // 2. Get sender address from public key
+        let sender_address = Address::from_public_key_bytes(&self.public_key);
+    
+        true
     }
 }
 
@@ -73,22 +94,19 @@ pub fn verify(t: &Transaction, public_key: &[u8], signature: &[u8]) -> bool {
 pub fn generate_random_transaction() -> Transaction {
     let mut rng = rand::thread_rng();
 
-    // Generate random addresses
-    let mut sender_bytes = [0u8; 20];
+    // Generate random receiver address
     let mut receiver_bytes = [0u8; 20];
-    rng.fill(&mut sender_bytes);
     rng.fill(&mut receiver_bytes);
-
-    let sender = Address::from(sender_bytes);
     let receiver = Address::from(receiver_bytes);
     
-    // Generate a random value
+    // Generate a random value and nonce
     let value = rng.gen_range(1..1000);
+    let nonce = rng.gen_range(0..1000);
 
     Transaction {
-        sender,
         receiver,
         value,
+        nonce,
     }
 }
 

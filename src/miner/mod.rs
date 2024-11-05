@@ -1,12 +1,15 @@
 use std::sync::{Arc, Mutex};
 use crate::blockchain::Blockchain;
 use crate::types::hash::Hashable;
+use rand::Rng;
 pub mod worker;
 use log::info;
 use crossbeam::channel::{unbounded, Receiver, Sender, TryRecvError};
-use std::time;
+use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use std::thread;
 use crate::types::block::Block;
+use crate::types::mempool::Mempool;
+use crate::types::block::compute_merkle_root;
 
 enum ControlSignal {
     Start(u64), // the number controls the lambda of interval between block generation
@@ -26,6 +29,7 @@ pub struct Context {
     operating_state: OperatingState,
     finished_block_chan: Sender<Block>,
     pub blockchain: Arc<Mutex<Blockchain>>,
+    mempool: Arc<Mutex<Mempool>>,  // Add this line
 }
 
 #[derive(Clone)]
@@ -34,7 +38,7 @@ pub struct Handle {
     control_chan: Sender<ControlSignal>,
 }
 
-pub fn new(blockchain: Arc<Mutex<Blockchain>>) -> (Context, Handle, Receiver<Block>) {
+pub fn new(blockchain: Arc<Mutex<Blockchain>>, mempool: Arc<Mutex<Mempool>>) -> (Context, Handle, Receiver<Block>) {
     let (signal_chan_sender, signal_chan_receiver) = unbounded();
     let (finished_block_sender, finished_block_receiver) = unbounded();
 
@@ -42,7 +46,8 @@ pub fn new(blockchain: Arc<Mutex<Blockchain>>) -> (Context, Handle, Receiver<Blo
         control_chan: signal_chan_receiver,
         operating_state: OperatingState::Paused,
         finished_block_chan: finished_block_sender,
-        blockchain: Arc::clone(&blockchain), // Pass blockchain
+        blockchain: Arc::clone(&blockchain),
+        mempool: Arc::clone(&mempool),  // Add this line
     };
 
     let handle = Handle {
@@ -138,73 +143,83 @@ impl Context {
                 return;
             }
 
-            // TODO for student: actual mining, create a block
-            use rand::Rng;
-            use std::time::{SystemTime, UNIX_EPOCH};
+            // Get transactions from mempool
+            let transactions = {
+                let mempool = self.mempool.lock().expect("Failed to lock mempool");
+                let txs = mempool.get_transactions();
+                drop(mempool);
+                txs
+            };
 
-            // 1. Get the parent block hash from the blockchain tip
-            let blockchain = self.blockchain.lock().expect("Failed to lock blockchain");
-            let mut parent_hash = blockchain.tip();
-            let parent_block = blockchain.blocks.get(&parent_hash).expect("Parent block not found");
+            // Only proceed with mining if there are transactions
+            if !transactions.is_empty() {
+                // 1. Get the parent block hash from the blockchain tip
+                let blockchain = self.blockchain.lock().expect("Failed to lock blockchain");
+                let mut parent_hash = blockchain.tip();
+                let parent_block = blockchain.blocks.get(&parent_hash).expect("Parent block not found");
 
+                // 2. Generate the current timestamp in milliseconds
+                let timestamp = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .expect("Time went backwards")
+                    .as_millis();
 
-            // 2. Generate the current timestamp in milliseconds
-            let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)
-                .expect("Time went backwards")
-                .as_millis();
+                // 3. Set difficulty as the same as the parent block
+                let difficulty = parent_block.get_difficulty();
+                drop(blockchain);
 
-            // 3. Set difficulty as the same as the parent block (static for this project)
-            let difficulty = parent_block.get_difficulty();
-            drop(blockchain);
+                // 4. Compute the Merkle root with actual transactions
+                let merkle_root = compute_merkle_root(&transactions);
 
-            // 4. Compute the Merkle root (using empty transactions in this phase)
-            use crate::types::block::compute_merkle_root;
-            let transactions = vec![];  // No transactions, so we use an empty list
-            let merkle_root = compute_merkle_root(&transactions);
+                // 5. Mining loop: Generate a random nonce and create the block
+                let mut rng = rand::thread_rng();
+                loop {
+                    let nonce: u32 = rng.gen();  // Generate a random nonce
 
-            // 5. Mining loop: Generate a random nonce and create the block
-            let mut rng = rand::thread_rng();
-            loop {
-                let nonce: u32 = rng.gen();  // Generate a random nonce
+                    let header = crate::types::block::Header {
+                        parent: parent_hash,
+                        nonce,
+                        difficulty,
+                        timestamp: timestamp as u128,
+                        merkle_root,
+                    };
 
-                let header = crate::types::block::Header {
-                    parent: parent_hash,
-                    nonce,
-                    difficulty,
-                    timestamp: timestamp as u128,
-                    merkle_root,
-                };
+                    let block = crate::types::block::Block {
+                        header,
+                        content: crate::types::block::Content {
+                            data: transactions.clone(),
+                        },
+                    };
 
-                let block = crate::types::block::Block {
-                    header,
-                    content: crate::types::block::Content {
-                        data: transactions.clone(),
-                    },
-                };
-
-                // 6. Check if the block hash satisfies the difficulty (Proof-of-Work check)
-                if block.hash() <= difficulty {
+                    // 6. Check if the block hash satisfies the difficulty
+                    if block.hash() <= difficulty {
 
                     // Insert the mined block directly into the blockchain COULD BE DELETED LATER
+                    /*
                     {
                         let mut blockchain_guard = self.blockchain.lock().expect("Failed to lock blockchain");
                         blockchain_guard.insert(&block).expect("Failed to insert block into blockchain");
                     }
+                    */
 
-                    // Send the block through the finished_block_chan if needed (optional, if worker is bypassed)
+                    {
+                        let mut mempool = self.mempool.lock().unwrap();
+                        mempool.remove_transactions(&transactions);
+                        // The lock will automatically be dropped at the end of this scope
+                    }
+
+                    // Send the block through the finished_block_chan
                     self.finished_block_chan.send(block.clone()).expect("Failed to send finished block");
-
-                    // Update the parent to the new block's hash for the next iteration
                     parent_hash = block.hash();
                     break;
+                    }
                 }
             }
 
-            // TODO for student: if block mining finished, you can have something like: self.finished_block_chan.send(block.clone()).expect("Send finished block error");
-
+            // Sleep if needed
             if let OperatingState::Run(i) = self.operating_state {
                 if i != 0 {
-                    let interval = time::Duration::from_micros(i as u64);
+                    let interval = Duration::from_micros(i as u64);
                     thread::sleep(interval);
                 }
             }

@@ -1,12 +1,15 @@
 use crate::types::block::Block;
 use crate::types::hash::H256;
 use crate::types::hash::Hashable;
+use crate::types::address::Address;
 use std::collections::HashMap;
 use hex_literal::hex;
 
 #[derive(Debug)]
 pub enum BlockchainError {
     BlockNotInserted,
+    InvalidNonce,
+    InsufficientBalance,
 }
 
 pub struct Blockchain {
@@ -28,7 +31,7 @@ impl Blockchain {
         */
         
         let difficulty = H256::from(hex!(
-            "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            "00007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         ));
         
         let content = crate::types::block::Content {
@@ -72,6 +75,7 @@ impl Blockchain {
 
         // Ensure the parent exists in the blockchain
         if let Some(&parent_length) = self.chain_lengths.get(&parent_hash) {
+
             let new_length = parent_length + 1;
 
             // Insert the block
@@ -91,6 +95,10 @@ impl Blockchain {
     /// Get the last block's hash of the longest chain
     pub fn tip(&self) -> H256 {
         self.tip
+    }
+
+    pub fn get_block(&self, hash: &H256) -> Option<&Block> {
+        self.blocks.get(hash)
     }
 
     /// Get all blocks' hashes of the longest chain, ordered from genesis to the tip
