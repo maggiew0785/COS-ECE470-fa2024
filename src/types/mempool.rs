@@ -4,31 +4,65 @@ use super::{
     transaction::SignedTransaction,
 };
 use crate::Blockchain;
+use crate::error;
+use std::sync::{Arc, Mutex};
+use crate::info;
+
 
 #[derive(Debug, Default, Clone)]
 pub struct Mempool {
-    transactions: HashMap<H256, SignedTransaction>,
+    pub transactions: HashMap<H256, SignedTransaction>,
     max_block_size: usize,
+    blockchain: Arc<Mutex<Blockchain>>,
 }
 
 impl Mempool {
-    pub fn new() -> Self {
+    pub fn new(blockchain: Arc<Mutex<Blockchain>>) -> Self {
         Self {
             transactions: HashMap::new(),
-            max_block_size: 100, // You can adjust this value
+            max_block_size: 100,
+            blockchain,
         }
     }
 
+    // In insert function:
     pub fn insert(&mut self, transaction: SignedTransaction) -> bool {
         let hash = transaction.hash();
-        if !self.transactions.contains_key(&hash) && transaction.verify() {
+        
+        if self.transactions.contains_key(&hash) {
+            info!("Transaction already in mempool: {:?}", hash);
+            return false;
+        }
+    
+        let is_valid = {
+            let blockchain = self.blockchain.lock().unwrap();
+            match blockchain.states.get(&blockchain.tip()) {
+                Some(current_state) => {
+                    info!("Validating transaction in mempool");
+                    let valid = transaction.verify(current_state);
+                    if valid {
+                        info!("Transaction validation successful in mempool");
+                    } else {
+                        error!("Transaction validation failed in mempool");
+                    }
+                    valid
+                },
+                None => {
+                    error!("Could not get current state from blockchain");
+                    false
+                }
+            }
+        };
+    
+        if is_valid {
+            info!("Adding transaction {:?} to mempool", hash);
             self.transactions.insert(hash, transaction);
             true
         } else {
+            error!("Transaction {:?} not added to mempool due to validation failure", hash);
             false
         }
     }
-
 
     // Get transactions for block creation (up to max_block_size)
     pub fn get_transactions(&self) -> Vec<SignedTransaction> {
@@ -52,5 +86,27 @@ impl Mempool {
     // Get a specific transaction by its hash
     pub fn get_transaction(&self, hash: &H256) -> Option<&SignedTransaction> {
         self.transactions.get(hash)
+    }
+
+    pub fn validate_transactions(&mut self) {
+        let current_state = {
+            let blockchain = self.blockchain.lock().unwrap();
+            blockchain.states.get(&blockchain.tip())
+                .expect("Tip state must exist")
+                .clone()
+        };
+    
+        let mut temp_state = current_state.clone();
+        let mut valid_txs = Vec::new();
+        
+        // First pass: collect valid transactions in order
+        for (_, tx) in &self.transactions {
+            if tx.verify(&temp_state) && temp_state.process_transaction(tx).is_ok() {
+                valid_txs.push(tx.hash());
+            }
+        }
+        
+        // Second pass: retain only valid transactions
+        self.transactions.retain(|hash, _| valid_txs.contains(hash));
     }
 }

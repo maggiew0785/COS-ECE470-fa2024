@@ -66,7 +66,11 @@ impl Server {
     ) {
         let handle = HTTPServer::http(&addr).unwrap();
         let tx_generator = Arc::new(Mutex::new(
-            TransactionGenerator::new(network.clone(), Arc::clone(mempool), Arc::clone(blockchain))
+            TransactionGenerator::new(
+                network.clone(), 
+                Arc::clone(mempool), 
+                Arc::clone(blockchain),
+            )
         ));
         let server = Arc::new(Self {
             handle,
@@ -140,16 +144,77 @@ impl Server {
                                 }
                             };
                             
-                            let tx_generator = server_clone.tx_generator.clone();
-                            {
-                                let generator = tx_generator.lock().unwrap();
-                                generator.clone().start(theta);
-                            }  // Lock is dropped here
+                            // Clone the generator outside the lock
+                            let generator = {
+                                let tx_generator = server_clone.tx_generator.lock().unwrap();
+                                tx_generator.clone()
+                            };  // Lock is dropped here
+                            
+                            // Start the generator after dropping the lock
+                            generator.start(theta);
                             respond_result!(req, true, "transaction generator started");
                         }
                         "/network/ping" => {
                             network.broadcast(Message::Ping(String::from("Test ping")));
                             respond_result!(req, true, "ok");
+                        }
+                        "/blockchain/state" => {
+                            let params = url.query_pairs();
+                            let params: HashMap<_, _> = params.into_owned().collect();
+                            
+                            // Get block parameter
+                            let block_height = match params.get("block") {
+                                Some(v) => match v.parse::<u32>() {
+                                    Ok(h) => h,
+                                    Err(e) => {
+                                        respond_result!(req, false, format!("error parsing block height: {}", e));
+                                        return;
+                                    }
+                                },
+                                None => {
+                                    respond_result!(req, false, "missing block parameter");
+                                    return;
+                                }
+                            };
+
+                            // Get state at specified block height
+                            let result = {
+                                let blockchain = blockchain.lock().unwrap();
+                                let chain = blockchain.all_blocks_in_longest_chain();
+                                
+                                if (block_height as usize) >= chain.len() {
+                                    respond_result!(req, false, "block height exceeds chain length");
+                                    return;
+                                }
+
+                                // Get block hash at specified height
+                                let block_hash = chain[block_height as usize];
+                                
+                                // Get state for that block
+                                if let Some(state) = blockchain.states.get(&block_hash) {
+                                    // Convert state entries to strings
+                                    let mut entries: Vec<String> = state
+                                        .accounts
+                                        .iter()
+                                        .map(|(addr, account)| {
+                                            format!("({}, {}, {})", 
+                                                hex::encode(addr.as_bytes()),
+                                                account.nonce,
+                                                account.balance
+                                            )
+                                        })
+                                        .collect();
+                                    
+                                    // Sort entries for consistent ordering
+                                    entries.sort();
+                                    entries
+                                } else {
+                                    respond_result!(req, false, "state not found for block");
+                                    return;
+                                }
+                            };
+                            drop(blockchain);
+                            respond_json!(req, result);
                         }
                         "/blockchain/longest-chain" => {
                             let blockchain = blockchain.lock().unwrap();

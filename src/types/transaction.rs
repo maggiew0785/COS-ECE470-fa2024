@@ -5,6 +5,7 @@ use crate::blockchain::Blockchain;
 use crate::types::hash::{Hashable, H256};
 use bincode;
 use ring::digest;
+use crate::types::state::State;
 
 // Assuming Address struct is defined in another module
 use crate::types::address::Address;
@@ -42,7 +43,7 @@ impl SignedTransaction {
         }
     }
 
-    pub fn verify(&self) -> bool {
+    pub fn verify(&self, state: &State) -> bool {
         // 1. Signature verification
         let verification_result = UnparsedPublicKey::new(
             &ED25519,
@@ -58,6 +59,20 @@ impl SignedTransaction {
     
         // 2. Get sender address from public key
         let sender_address = Address::from_public_key_bytes(&self.public_key);
+    
+        // 3. Check if sender account exists and has sufficient balance
+        if let Some(account) = state.get_account_state(&sender_address) {
+            // Check nonce
+            if self.transaction.nonce != account.nonce + 1 {
+                return false;
+            }
+            // Check balance
+            if account.balance < self.transaction.value {
+                return false;
+            }
+        } else {
+            return false;
+        }
     
         true
     }

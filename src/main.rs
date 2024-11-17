@@ -3,6 +3,7 @@
 extern crate hex_literal;
 
 use crate::types::mempool::Mempool;
+use log::LevelFilter;
 
 pub mod api;
 pub mod blockchain;
@@ -23,6 +24,8 @@ use std::thread;
 use std::time;
 
 fn main() {
+
+    // ... rest of your main function
     // parse command line arguments
     let matches = clap_app!(Bitcoin =>
      (version: "0.1")
@@ -38,9 +41,6 @@ fn main() {
     // init logger
     let verbosity = matches.occurrences_of("verbose") as usize;
     stderrlog::new().verbosity(verbosity).init().unwrap();
-    let blockchain = Blockchain::new();
-    let blockchain = Arc::new(Mutex::new(blockchain));
-    let mempool = Arc::new(Mutex::new(Mempool::new()));
     // parse p2p server address
     let p2p_addr = matches
         .value_of("peer_addr")
@@ -67,6 +67,10 @@ fn main() {
     // start the p2p server
     let (server_ctx, server) = network::server::new(p2p_addr, msg_tx).unwrap();
     server_ctx.start().unwrap();
+
+    let blockchain = Blockchain::new(); 
+    let blockchain = Arc::new(Mutex::new(blockchain));
+    let mempool = Arc::new(Mutex::new(Mempool::new(Arc::clone(&blockchain))));
 
     // start the worker
     let p2p_workers = matches

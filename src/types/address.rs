@@ -11,6 +11,8 @@ impl std::convert::From<&[u8; 20]> for Address {
         buffer[..].copy_from_slice(input);
         Address(buffer)
     }
+
+    
 }
 
 impl std::convert::From<[u8; 20]> for Address {
@@ -48,6 +50,10 @@ impl std::fmt::Debug for Address {
 }
 
 impl Address {
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
+    
     pub fn from_public_key_bytes(bytes: &[u8]) -> Address {
         // Hash the input bytes using SHA256
         let hash = digest::digest(&digest::SHA256, bytes);

@@ -145,7 +145,8 @@ impl Context {
 
             // Get transactions from mempool
             let transactions = {
-                let mempool = self.mempool.lock().expect("Failed to lock mempool");
+                let mut mempool = self.mempool.lock().expect("Failed to lock mempool");
+                mempool.validate_transactions();
                 let txs = mempool.get_transactions();
                 drop(mempool);
                 txs
@@ -201,7 +202,7 @@ impl Context {
                         blockchain_guard.insert(&block).expect("Failed to insert block into blockchain");
                     }
                     */
-
+                    info!("Successfully mined block with hash {:?}", block.hash());
                     {
                         let mut mempool = self.mempool.lock().unwrap();
                         mempool.remove_transactions(&transactions);
@@ -209,6 +210,7 @@ impl Context {
                     }
 
                     // Send the block through the finished_block_chan
+                    info!("Sending mined block to worker for processing");
                     self.finished_block_chan.send(block.clone()).expect("Failed to send finished block");
                     parent_hash = block.hash();
                     break;

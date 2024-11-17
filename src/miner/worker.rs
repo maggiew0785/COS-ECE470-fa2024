@@ -49,6 +49,7 @@ impl Worker {
                 //println!("Inserting block with hash: {:?}", block.hash());
                 let mut blockchain = self.blockchain.lock().expect("Failed to lock the blockchain");
                 blockchain.insert(&block).expect("Failed to insert block into blockchain");
+                drop(blockchain);
                 //println!("Blockchain tip updated to block hash: {:?}", block.hash());
             } // The lock is automatically released here
             
