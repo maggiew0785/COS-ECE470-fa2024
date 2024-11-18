@@ -144,13 +144,15 @@ impl Context {
             }
 
             // Get transactions from mempool
+            //info!("Attempting to get transactions from mempool");
             let transactions = {
                 let mut mempool = self.mempool.lock().expect("Failed to lock mempool");
-                mempool.validate_transactions();
-                let txs = mempool.get_transactions();
+                let txs = mempool.validate_transactions();
+                //info!("Retrieved {} valid transactions from mempool", txs.len());
                 drop(mempool);
                 txs
             };
+
 
             // Only proceed with mining if there are transactions
             if !transactions.is_empty() {
@@ -173,10 +175,14 @@ impl Context {
                 let merkle_root = compute_merkle_root(&transactions);
 
                 // 5. Mining loop: Generate a random nonce and create the block
+                info!("Starting proof-of-work loop");
+                let mut attempts = 0;
                 let mut rng = rand::thread_rng();
                 loop {
                     let nonce: u32 = rng.gen();  // Generate a random nonce
-
+                    if attempts % 1000 == 0 {
+                        info!("Mining attempt {}", attempts);
+                    }
                     let header = crate::types::block::Header {
                         parent: parent_hash,
                         nonce,
@@ -192,17 +198,14 @@ impl Context {
                         },
                     };
 
+
+                    
                     // 6. Check if the block hash satisfies the difficulty
                     if block.hash() <= difficulty {
 
-                    // Insert the mined block directly into the blockchain COULD BE DELETED LATER
-                    /*
-                    {
-                        let mut blockchain_guard = self.blockchain.lock().expect("Failed to lock blockchain");
-                        blockchain_guard.insert(&block).expect("Failed to insert block into blockchain");
-                    }
-                    */
-                    info!("Successfully mined block with hash {:?}", block.hash());
+                     info!("Found valid block! Hash: {:?}, Nonce: {}, Attempts: {}", 
+                          block.hash(), nonce, attempts);
+
                     {
                         let mut mempool = self.mempool.lock().unwrap();
                         mempool.remove_transactions(&transactions);
@@ -215,6 +218,7 @@ impl Context {
                     parent_hash = block.hash();
                     break;
                     }
+                    attempts += 1;
                 }
             }
 

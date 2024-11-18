@@ -20,6 +20,7 @@ pub fn new(
     let (control_signal_sender, control_signal_receiver) = smol::channel::bounded(10000);
     let handle = Handle {
         control_chan: control_signal_sender.clone(),
+        p2p_addr: addr,  // Store the P2P address
     };
     let ctx = Context {
         peers: std::collections::HashMap::new(),
@@ -231,6 +232,7 @@ impl Context {
 #[derive(Clone)]
 pub struct Handle {
     control_chan: smol::channel::Sender<ControlSignal>,
+    pub p2p_addr: std::net::SocketAddr,
 }
 #[cfg(any(test,test_utilities))]
 pub struct TestReceiver{

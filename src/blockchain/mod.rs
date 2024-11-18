@@ -8,8 +8,10 @@ use hex_literal::hex;
 use ring::signature::Ed25519KeyPair;
 use ring::rand::SystemRandom;
 use ring::signature::KeyPair;
+use crate::info;
 
 #[derive(Debug)]
+#[derive(Clone)]  // Add this line
 pub enum BlockchainError {
     BlockNotInserted,
     InvalidNonce,
@@ -23,25 +25,36 @@ pub struct Blockchain {
     pub states: HashMap<H256, State>,  // Maps block hash to state after that block
     chain_lengths: HashMap<H256, usize>, // Track chain length for each block's hash
     tip: H256, // Track the tip of the longest chain
-    ico_keypair: ring::signature::Ed25519KeyPair,  
 }
 
+use lazy_static::lazy_static;
 
+// Define the three ICO keypairs as static variables
 
+lazy_static! {
+    // Store the seeds instead of the keypairs
+    static ref ICO_SEEDS: [[u8; 32]; 3] = [
+        [1u8; 32],  // Fixed seed for first keypair
+        [2u8; 32],  // Fixed seed for second keypair
+        [3u8; 32],  // Fixed seed for third keypair
+    ];
+}
+
+// Function to retrieve the appropriate keypair based on P2P address
+pub fn retrieve_keypair(p2p_addr: std::net::SocketAddr) -> Ed25519KeyPair {
+    let index = (p2p_addr.port() % 3) as usize;
+    Ed25519KeyPair::from_seed_unchecked(&ICO_SEEDS[index]).unwrap()
+}
 
 impl Blockchain {
-    pub fn generate_ico_keypair() -> Ed25519KeyPair {
-        // Use fixed seed for consistent ICO address across all nodes
-        let seed = [42u8; 32];  // Fixed seed value
-        Ed25519KeyPair::from_seed_unchecked(&seed).unwrap()
-    }
+
     /// Create a new blockchain, only containing the genesis block
     pub fn new() -> Self {
         // Create a genesis block with fixed values
         let parent = H256::from([0u8; 32]); // Parent is all zeroes
         let nonce = 0;
         let difficulty = H256::from(hex!(
-            "00007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            "0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         ));
         
         let content = crate::types::block::Content {
@@ -68,18 +81,17 @@ impl Blockchain {
         let mut blocks = HashMap::new();
         blocks.insert(genesis_hash, genesis_block);
 
-         // Create ICO keypair
-        let ico_keypair = Self::generate_ico_keypair();
-        
-        // Create ICO address from public key
-        let ico_address = Address::from_public_key_bytes(
-            ico_keypair.public_key().as_ref()
-        );
 
-        let mut states = HashMap::new();
-        // Create initial state for genesis block
+        // Initialize genesis state with all three ICO addresses
         let mut genesis_state = State::new();
-        genesis_state.create_account(ico_address, 1_000_000); // Initial balance of 1,000,000
+        
+        // Create accounts for each ICO seed
+        for seed in ICO_SEEDS.iter() {
+            let keypair = Ed25519KeyPair::from_seed_unchecked(seed).unwrap();
+            let address = Address::from_public_key_bytes(keypair.public_key().as_ref());
+            genesis_state.create_account(address, 10_000_000); // 10M coins each
+}
+        let mut states = HashMap::new();
         states.insert(genesis_hash, genesis_state);
 
         let mut chain_lengths = HashMap::new();
@@ -90,7 +102,6 @@ impl Blockchain {
             states,
             chain_lengths,
             tip: genesis_hash, // The genesis block is the initial tip
-            ico_keypair,
         }
     }
 
@@ -101,11 +112,11 @@ impl Blockchain {
     
         if let Some(parent_state) = self.states.get(&parent_hash) {
             // Process transactions to get new state
-            let new_state = self.process_block_transactions(block, parent_state.clone());
+            let new_state = self.process_block_transactions(block, parent_state.clone())?;  // Add ? here
             
             // Store block and its state
             self.blocks.insert(block_hash, block.clone());
-            self.states.insert(block_hash, new_state);
+            self.states.insert(block_hash, new_state);  // Remove clone() since new_state is already owned
             
             // Update chain length
             let new_length = self.chain_lengths[&parent_hash] + 1;
@@ -118,6 +129,7 @@ impl Blockchain {
             
             Ok(())
         } else {
+            info!("Block not inserted because parent state not found");
             Err(BlockchainError::BlockNotInserted)
         }
     }
@@ -137,10 +149,6 @@ impl Blockchain {
         self.blocks.get(hash)
     }
 
-     // Add this method
-     pub fn get_ico_keypair(&self) -> &Ed25519KeyPair {
-        &self.ico_keypair
-    }
 
     /// Get all blocks' hashes of the longest chain, ordered from genesis to the tip
     pub fn all_blocks_in_longest_chain(&self) -> Vec<H256> {
@@ -157,31 +165,17 @@ impl Blockchain {
         chain
     }
 
-    fn process_block_transactions(&mut self, block: &Block, parent_state: State) -> State {
-        let mut new_state = parent_state.clone();
+    fn process_block_transactions(&mut self, block: &Block, parent_state: State) -> Result<State, BlockchainError> {
+        let mut new_state = parent_state;
         
-        // First validate all transactions together to ensure they're valid as a group
-        let mut temp_state = new_state.clone();
+        // Process each transaction, returning error if any fail
         for tx in &block.content.data {
-            // Check signature and nonce
-            if !tx.verify(&temp_state) {
-                return parent_state; // Invalid block, revert to parent state
-            }
-            
-            // Try applying transaction
-            match temp_state.process_transaction(tx) {
-                Ok(_) => continue,
-                Err(_) => return parent_state, // Invalid block, revert to parent state
+            if let Err(_) = new_state.process_transaction(tx) {
+                info!("");
             }
         }
         
-        // If all transactions are valid, apply them to actual state
-        for tx in &block.content.data {
-            new_state.process_transaction(tx)
-                .expect("Transaction validation already passed");
-        }
-        
-        new_state
+        Ok(new_state)
     }
 }
 

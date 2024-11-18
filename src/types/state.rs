@@ -56,16 +56,7 @@ impl State {
         if !tx.verify(&self) {
             return Err("Invalid signature".to_string());
         }
-        // Verify nonce
-        if tx.transaction.nonce != sender_account.nonce + 1 {
-            return Err("Invalid nonce".to_string());
-        }
-        
-        // Verify balance
-        if sender_account.balance < tx.transaction.value {
-            return Err("Insufficient balance".to_string());
-        }
-        
+
         // Update sender
         self.update_balance(&sender, sender_account.balance - tx.transaction.value);
         self.increment_nonce(&sender);

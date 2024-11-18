@@ -29,39 +29,16 @@ impl Mempool {
     pub fn insert(&mut self, transaction: SignedTransaction) -> bool {
         let hash = transaction.hash();
         
+        info!("Attempting to insert transaction {} into mempool", hash);
+
         if self.transactions.contains_key(&hash) {
             info!("Transaction already in mempool: {:?}", hash);
             return false;
         }
     
-        let is_valid = {
-            let blockchain = self.blockchain.lock().unwrap();
-            match blockchain.states.get(&blockchain.tip()) {
-                Some(current_state) => {
-                    info!("Validating transaction in mempool");
-                    let valid = transaction.verify(current_state);
-                    if valid {
-                        info!("Transaction validation successful in mempool");
-                    } else {
-                        error!("Transaction validation failed in mempool");
-                    }
-                    valid
-                },
-                None => {
-                    error!("Could not get current state from blockchain");
-                    false
-                }
-            }
-        };
-    
-        if is_valid {
-            info!("Adding transaction {:?} to mempool", hash);
-            self.transactions.insert(hash, transaction);
-            true
-        } else {
-            error!("Transaction {:?} not added to mempool due to validation failure", hash);
-            false
-        }
+        info!("Adding transaction {:?} to mempool", hash);
+        self.transactions.insert(hash, transaction);
+        true
     }
 
     // Get transactions for block creation (up to max_block_size)
@@ -79,6 +56,7 @@ impl Mempool {
     // Remove transactions that were included in a block
     pub fn remove_transactions(&mut self, transactions: &[SignedTransaction]) {
         for tx in transactions {
+            info!("Removing transaction {:?} from mempool", tx.hash());
             self.transactions.remove(&tx.hash());
         }
     }
@@ -88,7 +66,7 @@ impl Mempool {
         self.transactions.get(hash)
     }
 
-    pub fn validate_transactions(&mut self) {
+    pub fn validate_transactions(&self) -> Vec<SignedTransaction> {
         let current_state = {
             let blockchain = self.blockchain.lock().unwrap();
             blockchain.states.get(&blockchain.tip())
@@ -96,17 +74,19 @@ impl Mempool {
                 .clone()
         };
     
-        let mut temp_state = current_state.clone();
-        let mut valid_txs = Vec::new();
-        
-        // First pass: collect valid transactions in order
-        for (_, tx) in &self.transactions {
-            if tx.verify(&temp_state) && temp_state.process_transaction(tx).is_ok() {
-                valid_txs.push(tx.hash());
-            }
-        }
-        
-        // Second pass: retain only valid transactions
-        self.transactions.retain(|hash, _| valid_txs.contains(hash));
+        // Filter valid transactions without modifying mempool
+        self.transactions.values()
+            .filter(|tx| {
+                let is_valid = tx.verify(&current_state);
+                if is_valid {
+                    info!("Transaction {:?} passed validation", tx.hash());
+                } else {
+                    info!("Transaction {:?} failed validation", tx.hash());
+                }
+                is_valid
+            })
+            .cloned()
+            .take(self.max_block_size)
+            .collect()
     }
 }

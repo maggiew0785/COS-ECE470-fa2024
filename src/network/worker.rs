@@ -107,6 +107,7 @@ impl Worker {
                     }
                 }
                 // Handle Blocks
+                // Handle Blocks
                 Message::Blocks(blocks) => {
                     for block in blocks {
                         let parent_hash = block.get_parent();
@@ -145,27 +146,30 @@ impl Worker {
                             warn!("Block failed PoW check: {:?}", block_hash);
                             continue;
                         }
-                
-                         // Validate transactions
-                        let mut all_transactions_valid = true;
-                        {
+
+                        // Validate all transactions in the block
+                        let all_transactions_valid = {
                             let blockchain = self.blockchain.lock().unwrap();
                             if let Some(parent_state) = blockchain.states.get(&parent_hash) {
-                                for tx in &block.content.data {
-                                    if !tx.verify(parent_state) {
-                                        warn!("Invalid transaction in block: {:?}", block_hash);
-                                        all_transactions_valid = false;
-                                        break;
+                                block.content.data.iter().all(|tx| {
+                                    let is_valid = tx.verify(parent_state);
+                                    if !is_valid {
+                                        info!("Transaction {:?} in block {:?} failed validation", tx.hash(), block_hash);
                                     }
-                                }
+                                    is_valid
+                                })
                             } else {
-                                error!("Parent state missing for block: {:?}", block_hash);
-                                all_transactions_valid = false;
+                                warn!("Parent state not found for block: {:?}", block_hash);
+                                false
                             }
-                            drop(blockchain);
-                        }
+                        };
 
                         if !all_transactions_valid {
+                            info!("Block {:?} contains invalid transactions, buffering until parent state is valid", block_hash);
+                            self.orphan_buffer
+                                .entry(parent_hash)
+                                .or_insert_with(Vec::new)
+                                .push(block);
                             continue;
                         }
                 
@@ -198,6 +202,7 @@ impl Worker {
 
                 Message::NewTransactionHashes(hashes) => {
                     let mut txs_to_request = Vec::new();
+
                     {
                         let mempool = self.mempool.lock().unwrap();
                         for hash in hashes {
@@ -208,16 +213,23 @@ impl Worker {
                         drop(mempool);
                     }
                     if !txs_to_request.is_empty() {
+                        info!("Requesting {} transactions from peer", txs_to_request.len());
                         peer.write(Message::GetTransactions(txs_to_request));
                     }
                 }
 
                 Message::GetTransactions(hashes) => {
+                    info!("Received request for {} transactions", hashes.len());
                     let mut transactions = Vec::new();
                     let mempool = self.mempool.lock().unwrap();
+                    info!("Mempool contains {} transactions", mempool.transactions.len());
                     for hash in hashes {
                         if let Some(tx) = mempool.get_transaction(&hash) {
                             transactions.push(tx.clone());
+                            info!("Found requested transaction: {:?}", hash);
+                        }
+                        else { 
+                            info!("Requested transaction not found: {:?}", hash);
                         }
                     }
                     drop(mempool);
@@ -228,33 +240,21 @@ impl Worker {
 
                 Message::Transactions(transactions) => {
                     // Validate transactions with consistent state
-                    let mut valid_transactions = Vec::new();
-                    {
-                        let blockchain = self.blockchain.lock().unwrap();
-                        let current_state = blockchain.states.get(&blockchain.tip())
-                            .expect("Tip state must exist");
-                            
-                        // Validate while holding the lock
-                        for tx in transactions {
-                            if tx.verify(current_state) {
-                                valid_transactions.push(tx);
-                            }
+                    info!("Received {} transactions", transactions.len());
+                    let mut to_broadcast = Vec::new();
+                    let mut mempool = self.mempool.lock().unwrap();
+                    for tx in transactions {
+                        if mempool.insert(tx.clone()) {
+                            info!("Added new transaction to mempool: {:?}", tx.hash());
+                            to_broadcast.push(tx.hash());
                         }
-                        drop(blockchain);
                     }
+                    drop(mempool);
                     
-                    // Process valid transactions
-                    if !valid_transactions.is_empty() {
-                        let mut mempool = self.mempool.lock().unwrap();
-                        for tx in valid_transactions {
-                            if mempool.insert(tx.clone()) {
-                                // Only broadcast after successful insertion
-                                drop(mempool);  // Release lock before network operation
-                                self.server.broadcast(Message::NewTransactionHashes(vec![tx.hash()]));
-                                mempool = self.mempool.lock().unwrap();  // Re-acquire for next iteration
-                            }
-                        }
-                        drop(mempool);
+                    // Broadcast all at once after releasing lock
+                    if !to_broadcast.is_empty() {
+                        info!("Broadcasting {} new transactions", to_broadcast.len());
+                        self.server.broadcast(Message::NewTransactionHashes(to_broadcast));
                     }
                 }
 

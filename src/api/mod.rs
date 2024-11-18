@@ -70,6 +70,7 @@ impl Server {
                 network.clone(), 
                 Arc::clone(mempool), 
                 Arc::clone(blockchain),
+                network.p2p_addr,
             )
         ));
         let server = Arc::new(Self {
