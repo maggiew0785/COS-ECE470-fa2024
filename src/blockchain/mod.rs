@@ -54,7 +54,7 @@ impl Blockchain {
         let parent = H256::from([0u8; 32]); // Parent is all zeroes
         let nonce = 0;
         let difficulty = H256::from(hex!(
-            "0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            "00007fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         ));
         
         let content = crate::types::block::Content {
